@@ -1,7 +1,7 @@
 import { IDriver, IDriverDatabase, IDriverStatement } from 'zendb';
 import { SqlJsStatic, Database, Statement } from 'sql.js';
 
-export type FileStore = Record<string, Uint8Array>;
+export type FileStore = { main: Uint8Array | null; migration: Uint8Array | null };
 
 export class Driver implements IDriver<DriverDatabase> {
   public readonly sqlJsStatic: SqlJsStatic;
@@ -12,17 +12,25 @@ export class Driver implements IDriver<DriverDatabase> {
     this.files = files;
   }
 
-  connect(path: string): DriverDatabase {
-    return new DriverDatabase(new this.sqlJsStatic.Database(this.files[path]));
+  openMain(): DriverDatabase {
+    return new DriverDatabase(new this.sqlJsStatic.Database(this.files.main));
   }
 
-  remove(path: string): void {
-    delete this.files[path];
+  openMigration(): DriverDatabase {
+    return new DriverDatabase(new this.sqlJsStatic.Database(this.files.migration));
   }
 
-  rename(oldPath: string, newPath: string): void {
-    this.files[newPath] = this.files[oldPath];
-    delete this.files[oldPath];
+  removeMain(): void {
+    this.files.main = null;
+  }
+
+  removeMigration(): void {
+    this.files.migration = null;
+  }
+
+  applyMigration(): void {
+    this.files.main = this.files.migration;
+    this.files.migration = null;
   }
 }
 
