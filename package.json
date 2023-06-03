@@ -56,17 +56,17 @@
     "tslib": "^2.5.3",
     "tsup": "^6.7.0",
     "typescript": "^5.1.3",
-    "zendb": "^5.0.0-15"
+    "zendb": "^5.0.0-16"
   },
   "peerDependencies": {
     "sql.js": "^1.8.0",
-    "zendb": "5.0.0-15"
+    "zendb": "5.0.0-16"
+  },
+  "engines": {
+    "node": ">=16"
   },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
-  },
-  "engines": {
-    "node": ">=16"
   }
 }
