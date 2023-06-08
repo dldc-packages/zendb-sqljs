@@ -68,8 +68,12 @@ export const DqlJsDatabase = (() => {
         return opResult<zen.IListTablesOperation>(op.parse(results));
       }
       if (op.kind === 'Pragma') {
-        database.exec(op.sql);
-        return opResult<zen.IPragmaOperation<any>>(null);
+        const stmt = database.prepare(op.sql);
+        stmt.step();
+        const result = stmt.getAsObject();
+        stmt.reset();
+        stmt.free();
+        return opResult<zen.IPragmaOperation<any>>(op.parse([result]));
       }
       if (op.kind === 'PragmaSet') {
         database.exec(op.sql);
