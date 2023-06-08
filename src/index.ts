@@ -1,14 +1,14 @@
 import * as zen from 'zendb';
 import { Database as SqljsDatabase } from 'sql.js';
 
-export interface IDataBase {
+export interface IDqlJsDatabase {
   exec<Op extends zen.IOperation>(op: Op): zen.IOperationResult<Op>;
   execMany<Op extends zen.IOperation>(ops: Op[]): zen.IOperationResult<Op>[];
   readonly database: SqljsDatabase;
 }
 
-export const Database = (() => {
-  return { create, listTables: zen.Database.listTables, createTables: zen.Database.createTables };
+export const DqlJsDatabase = (() => {
+  return { create };
 
   function create(database: SqljsDatabase) {
     return {
@@ -67,6 +67,15 @@ export const Database = (() => {
         stmt.free();
         return opResult<zen.IListTablesOperation>(op.parse(results));
       }
+      if (op.kind === 'Pragma') {
+        database.exec(op.sql);
+        return opResult<zen.IPragmaOperation<any>>(null);
+      }
+      if (op.kind === 'PragmaSet') {
+        database.exec(op.sql);
+        return opResult<zen.IPragmaSetOperation>(null);
+      }
+
       return expectNever(op);
     }
 
