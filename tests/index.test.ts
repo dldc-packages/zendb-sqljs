@@ -1,6 +1,7 @@
 import initSqlJs, { SqlJsStatic } from 'sql.js';
-import { DqlJsDatabase } from '../src/index';
+import { beforeAll, expect, test } from 'vitest';
 import { Database } from 'zendb';
+import { DqlJsDatabase } from '../src/mod';
 
 let sqlJs: SqlJsStatic;
 
