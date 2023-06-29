@@ -1,15 +1,15 @@
 {
-  "name": "zendb-sqljs",
+  "name": "@dldc/zendb-sqljs",
   "version": "2.0.0-5",
   "description": "ZenDB driver for SQL.js",
   "keywords": [],
-  "homepage": "https://github.com/etienne-dldc/zendb-sqljs#readme",
+  "homepage": "https://github.com/dldc-packages/zendb-sqljs#readme",
   "bugs": {
-    "url": "https://github.com/etienne-dldc/zendb-sqljs/issues"
+    "url": "https://github.com/dldc-packages/zendb-sqljs/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/etienne-dldc/zendb-sqljs.git"
+    "url": "git+https://github.com/dldc-packages/zendb-sqljs.git"
   },
   "license": "MIT",
   "author": "Etienne Dldc <e.deladonchamps@gmail.com>",
