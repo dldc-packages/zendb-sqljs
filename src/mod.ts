@@ -1,4 +1,4 @@
-import * as zen from 'zendb';
+import * as zen from '@dldc/zendb';
 import { Database as SqljsDatabase } from 'sql.js';
 
 export interface IDqlJsDatabase {
