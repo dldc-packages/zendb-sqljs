@@ -1,5 +1,5 @@
-import * as zen from '@dldc/zendb';
-import { Database as SqljsDatabase } from 'sql.js';
+import type * as zen from '@dldc/zendb';
+import type { Database as SqljsDatabase } from 'sql.js';
 
 export interface IDqlJsDatabase {
   exec<Op extends zen.IOperation>(op: Op): zen.IOperationResult<Op>;
@@ -93,6 +93,6 @@ export const DqlJsDatabase = (() => {
   }
 
   function expectNever(val: never): never {
-    throw new Error(`Unexpected value: ${val}`);
+    throw new Error(`Unexpected value: ${val as any}`);
   }
 })();

@@ -1,5 +1,6 @@
 import { Database } from '@dldc/zendb';
-import initSqlJs, { SqlJsStatic } from 'sql.js';
+import type { SqlJsStatic } from 'sql.js';
+import initSqlJs from 'sql.js';
 import { beforeAll, expect, test } from 'vitest';
 import { DqlJsDatabase } from '../src/mod';
 
