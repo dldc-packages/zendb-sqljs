@@ -29,7 +29,7 @@ export const DqlJsDatabase = (() => {
       if (op.kind === 'Delete') {
         const stmt = database.prepare(op.sql);
         if (op.params) {
-          stmt.bind(op.params);
+          stmt.bind(prepareParams(op.params));
         }
         stmt.run();
         stmt.free();
@@ -38,7 +38,7 @@ export const DqlJsDatabase = (() => {
       if (op.kind === 'Update') {
         const stmt = database.prepare(op.sql);
         if (op.params) {
-          stmt.bind(op.params);
+          stmt.bind(prepareParams(op.params));
         }
         stmt.run();
         stmt.free();
@@ -47,7 +47,7 @@ export const DqlJsDatabase = (() => {
       if (op.kind === 'Query') {
         const stmt = database.prepare(op.sql);
         if (op.params) {
-          stmt.bind(op.params);
+          stmt.bind(prepareParams(op.params));
         }
         const results: Array<Record<string, any>> = [];
         while (stmt.step()) {
@@ -94,5 +94,17 @@ export const DqlJsDatabase = (() => {
 
   function expectNever(val: never): never {
     throw new Error(`Unexpected value: ${val as any}`);
+  }
+
+  function mapKeys<T extends Record<string, any>>(obj: T, transformKey: (key: string) => string): T {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, val]) => {
+        return [transformKey(key), val];
+      }),
+    ) as any;
+  }
+
+  function prepareParams(params: Record<string, any>): Record<string, any> {
+    return mapKeys(params, (key) => `:${key}`);
   }
 })();
