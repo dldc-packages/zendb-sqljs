@@ -81,8 +81,8 @@
     "root": true
   },
   "devDependencies": {
-    "@dldc/zendb": "^5.1.1",
-    "@types/node": "^20.8.2",
+    "@dldc/zendb": "^5.1.2",
+    "@types/node": "^20.8.3",
     "@types/sql.js": "^1.4.5",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
