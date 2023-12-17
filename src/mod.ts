@@ -1,13 +1,13 @@
 import type * as zen from '@dldc/zendb';
 import type { Database as SqljsDatabase } from 'sql.js';
 
-export interface IDqlJsDatabase {
+export interface ISqlJsDatabase {
   exec<Op extends zen.IOperation>(op: Op): zen.IOperationResult<Op>;
   execMany<Op extends zen.IOperation>(ops: Op[]): zen.IOperationResult<Op>[];
   readonly database: SqljsDatabase;
 }
 
-export const DqlJsDatabase = (() => {
+export const SqlJsDatabase = (() => {
   return { create };
 
   function create(database: SqljsDatabase) {

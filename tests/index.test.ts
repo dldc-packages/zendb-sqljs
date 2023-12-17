@@ -2,7 +2,7 @@ import { Database } from '@dldc/zendb';
 import type { SqlJsStatic } from 'sql.js';
 import initSqlJs from 'sql.js';
 import { beforeAll, expect, test } from 'vitest';
-import { DqlJsDatabase } from '../src/mod';
+import { SqlJsDatabase } from '../src/mod';
 
 let sqlJs: SqlJsStatic;
 
@@ -12,7 +12,7 @@ beforeAll(async () => {
 
 test('read pragma', () => {
   const sqldb = new sqlJs.Database();
-  const db = DqlJsDatabase.create(sqldb);
+  const db = SqlJsDatabase.create(sqldb);
 
   const res = db.exec(Database.userVersion());
   expect(res).toEqual(0);
@@ -20,7 +20,7 @@ test('read pragma', () => {
 
 test('write pragma', () => {
   const sqldb = new sqlJs.Database();
-  const db = DqlJsDatabase.create(sqldb);
+  const db = SqlJsDatabase.create(sqldb);
 
   const res = db.exec(Database.setUserVersion(42));
   expect(res).toEqual(null);
