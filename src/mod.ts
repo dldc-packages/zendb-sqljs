@@ -23,7 +23,7 @@ export const SqlJsDatabase = (() => {
         return opResult<zen.ICreateTableOperation>(null);
       }
       if (op.kind === 'Insert') {
-        database.exec(op.sql, op.params);
+        database.exec(op.sql, op.params ? prepareParams(op.params) : null);
         return opResult<zen.IInsertOperation<any>>(op.parse());
       }
       if (op.kind === 'Delete') {
