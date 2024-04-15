@@ -26,6 +26,10 @@ export const SqlJsDatabase = (() => {
         database.exec(op.sql, op.params ? prepareParams(op.params) : null);
         return opResult<zen.IInsertOperation<any>>(op.parse());
       }
+      if (op.kind === 'InsertMany') {
+        database.exec(op.sql, op.params ? prepareParams(op.params) : null);
+        return opResult<zen.IInsertOperation<any>>(op.parse());
+      }
       if (op.kind === 'Delete') {
         const stmt = database.prepare(op.sql);
         if (op.params) {
