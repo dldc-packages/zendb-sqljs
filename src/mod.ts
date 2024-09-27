@@ -2,8 +2,8 @@ import type * as zen from '@dldc/zendb';
 import type { Database as SqljsDatabase } from 'sql.js';
 
 export interface ISqlJsDatabase {
-  exec<Op extends zen.IOperation>(op: Op): zen.IOperationResult<Op>;
-  execMany<Op extends zen.IOperation>(ops: Op[]): zen.IOperationResult<Op>[];
+  exec<Op extends zen.TOperation>(op: Op): zen.TOperationResult<Op>;
+  execMany<Op extends zen.TOperation>(ops: Op[]): zen.TOperationResult<Op>[];
   readonly database: SqljsDatabase;
 }
 
@@ -17,18 +17,22 @@ export const SqlJsDatabase = (() => {
       database,
     };
 
-    function exec<Op extends zen.IOperation>(op: Op): zen.IOperationResult<Op> {
+    function exec<Op extends zen.TOperation>(op: Op): zen.TOperationResult<Op> {
       if (op.kind === 'CreateTable') {
         database.exec(op.sql);
-        return opResult<zen.ICreateTableOperation>(null);
+        return opResult<zen.TCreateTableOperation>(null);
+      }
+      if (op.kind === 'DropTable') {
+        database.exec(op.sql);
+        return opResult<zen.TDropTableOperation>(null);
       }
       if (op.kind === 'Insert') {
         database.exec(op.sql, op.params ? prepareParams(op.params) : null);
-        return opResult<zen.IInsertOperation<any>>(op.parse());
+        return opResult<zen.TInsertOperation<any>>(op.parse());
       }
       if (op.kind === 'InsertMany') {
         database.exec(op.sql, op.params ? prepareParams(op.params) : null);
-        return opResult<zen.IInsertOperation<any>>(op.parse());
+        return opResult<zen.TInsertOperation<any>>(op.parse());
       }
       if (op.kind === 'Delete') {
         const stmt = database.prepare(op.sql);
@@ -37,7 +41,7 @@ export const SqlJsDatabase = (() => {
         }
         stmt.run();
         stmt.free();
-        return opResult<zen.IDeleteOperation>(op.parse({ deleted: database.getRowsModified() }));
+        return opResult<zen.TDeleteOperation>(op.parse({ deleted: database.getRowsModified() }));
       }
       if (op.kind === 'Update') {
         const stmt = database.prepare(op.sql);
@@ -46,7 +50,7 @@ export const SqlJsDatabase = (() => {
         }
         stmt.run();
         stmt.free();
-        return opResult<zen.IUpdateOperation>(op.parse({ updated: database.getRowsModified() }));
+        return opResult<zen.TUpdateOperation>(op.parse({ updated: database.getRowsModified() }));
       }
       if (op.kind === 'Query') {
         const stmt = database.prepare(op.sql);
@@ -59,7 +63,7 @@ export const SqlJsDatabase = (() => {
         }
         stmt.reset();
         stmt.free();
-        return opResult<zen.IQueryOperation<any>>(op.parse(results));
+        return opResult<zen.TQueryOperation<any>>(op.parse(results));
       }
       if (op.kind === 'ListTables') {
         const stmt = database.prepare(op.sql);
@@ -69,7 +73,7 @@ export const SqlJsDatabase = (() => {
         }
         stmt.reset();
         stmt.free();
-        return opResult<zen.IListTablesOperation>(op.parse(results));
+        return opResult<zen.TListTablesOperation>(op.parse(results));
       }
       if (op.kind === 'Pragma') {
         const stmt = database.prepare(op.sql);
@@ -77,21 +81,21 @@ export const SqlJsDatabase = (() => {
         const result = stmt.getAsObject();
         stmt.reset();
         stmt.free();
-        return opResult<zen.IPragmaOperation<any>>(op.parse([result]));
+        return opResult<zen.TPragmaOperation<any>>(op.parse([result]));
       }
       if (op.kind === 'PragmaSet') {
         database.exec(op.sql);
-        return opResult<zen.IPragmaSetOperation>(null);
+        return opResult<zen.TPragmaSetOperation>(null);
       }
 
       return expectNever(op);
     }
 
-    function opResult<Op extends zen.IOperation>(res: zen.IOperationResult<Op>): zen.IOperationResult<zen.IOperation> {
+    function opResult<Op extends zen.TOperation>(res: zen.TOperationResult<Op>): zen.TOperationResult<zen.TOperation> {
       return res;
     }
 
-    function execMany<Op extends zen.IOperation>(ops: Op[]): zen.IOperationResult<Op>[] {
+    function execMany<Op extends zen.TOperation>(ops: Op[]): zen.TOperationResult<Op>[] {
       return ops.map((op) => exec(op));
     }
   }
