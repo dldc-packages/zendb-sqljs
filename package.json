@@ -1,6 +1,6 @@
 {
   "name": "@dldc/zendb-sqljs",
-  "version": "8.0.0",
+  "version": "9.0.0",
   "description": "ZenDB driver for SQL.js",
   "keywords": [],
   "homepage": "https://github.com/dldc-packages/zendb-sqljs#readme",
