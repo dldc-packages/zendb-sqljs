@@ -33,6 +33,9 @@ export const SqlJsDriver: TSqlJsDriver = {
     }
     return new SqlJsDriver.sqlJsStatic.Database();
   },
+  closeDatabase: (db: Database) => {
+    db.close();
+  },
   exec,
   execMany,
 };
