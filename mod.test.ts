@@ -1,8 +1,8 @@
 import { Column, Expr, Migration, queryFrom, Schema, Utils } from "@dldc/zendb";
+import { expect } from "@std/expect";
 import type { Database } from "sql.js";
 import initSqlJs from "sql.js";
-import { beforeAll, beforeEach, describe, expect, test } from "vitest";
-import { SqlJsDriver } from "../src/mod.js";
+import { SqlJsDriver } from "./mod.ts";
 
 // Test schema similar to ZenDb's tasksDb
 const tasksDb = Schema.declare({
@@ -43,24 +43,19 @@ const allDatatypesDb = Schema.declare({
   },
 });
 
-beforeAll(async () => {
-  const SQL = await initSqlJs();
-  SqlJsDriver.setSqlJsStatic(SQL);
-});
+const SQL = await initSqlJs();
+SqlJsDriver.setSqlJsStatic(SQL);
 
-describe("SqlJsDriver - Basic Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
-  });
-
-  test("should create database instance", () => {
+Deno.test("SqlJsDriver - Basic Operations", async (t) => {
+  await t.step("should create database instance", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     expect(db).toBeDefined();
     expect(typeof db.exec).toBe("function");
   });
 
-  test("should create tables from schema", () => {
+  await t.step("should create tables from schema", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
+
     const ops = Schema.createTables(tasksDb.tables, {
       ifNotExists: true,
       strict: true,
@@ -74,7 +69,9 @@ describe("SqlJsDriver - Basic Operations", () => {
     expect(tables).toEqual(["tasks", "users", "joinUsersTasks", "groups"]);
   });
 
-  test("should drop tables", () => {
+  await t.step("should drop tables", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
+
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     const dropOp = tasksDb.tables.tasks.schema.drop({ ifExists: true });
@@ -85,15 +82,11 @@ describe("SqlJsDriver - Basic Operations", () => {
   });
 });
 
-describe("SqlJsDriver - Insert Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - Insert Operations", async (t) => {
+  await t.step("should insert a single record", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
-  });
 
-  test("should insert a single record", () => {
     const insertOp = tasksDb.tables.tasks.insert({
       id: "1",
       title: "Task 1",
@@ -111,7 +104,10 @@ describe("SqlJsDriver - Insert Operations", () => {
     });
   });
 
-  test("should insert user with nullable fields", () => {
+  await t.step("should insert user with nullable fields", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
+    SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
+
     const insertOp = tasksDb.tables.users.insert({
       id: "1",
       name: "John Doe",
@@ -133,7 +129,10 @@ describe("SqlJsDriver - Insert Operations", () => {
     });
   });
 
-  test("should insert multiple records", () => {
+  await t.step("should insert multiple records", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
+    SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
+
     const users = [
       {
         id: "1",
@@ -159,7 +158,10 @@ describe("SqlJsDriver - Insert Operations", () => {
     expect(result).toEqual(users);
   });
 
-  test("should handle all datatypes", () => {
+  await t.step("should handle all datatypes", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
+    SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
+
     SqlJsDriver.execMany(db, Schema.createTables(allDatatypesDb.tables));
 
     const insertOp = allDatatypesDb.tables.datatype.insert({
@@ -186,11 +188,9 @@ describe("SqlJsDriver - Insert Operations", () => {
   });
 });
 
-describe("SqlJsDriver - Query Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - Query Operations", async (t) => {
+  function setup() {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     // Insert test data
@@ -227,13 +227,26 @@ describe("SqlJsDriver - Query Operations", () => {
     SqlJsDriver.exec(
       db,
       tasksDb.tables.tasks.insertMany([
-        { id: "1", title: "Task 1", description: "First task", completed: false },
-        { id: "2", title: "Task 2", description: "Second task", completed: true },
+        {
+          id: "1",
+          title: "Task 1",
+          description: "First task",
+          completed: false,
+        },
+        {
+          id: "2",
+          title: "Task 2",
+          description: "Second task",
+          completed: true,
+        },
       ]),
     );
-  });
 
-  test("should query all records", () => {
+    return db;
+  }
+
+  await t.step("should query all records", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks.query().all();
     const result = SqlJsDriver.exec(db, queryOp);
 
@@ -242,7 +255,8 @@ describe("SqlJsDriver - Query Operations", () => {
     expect(result[1].title).toBe("Task 2");
   });
 
-  test("should query with select", () => {
+  await t.step("should query with select", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
       .select((c) => ({ id: c.id, name: c.name }))
@@ -255,7 +269,8 @@ describe("SqlJsDriver - Query Operations", () => {
     expect(result[1]).toEqual({ id: "2", name: "Jane Doe" });
   });
 
-  test("should query with where clause", () => {
+  await t.step("should query with where clause", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks
       .query()
       .where((c) => Expr.equal(c.completed, Expr.literal(false)))
@@ -267,8 +282,10 @@ describe("SqlJsDriver - Query Operations", () => {
     expect(result[0].title).toBe("Task 1");
   });
 
-  test("should query with andFilterEqual", () => {
-    const queryOp = tasksDb.tables.users.query().andFilterEqual({ id: "1" }).maybeOne();
+  await t.step("should query with andFilterEqual", () => {
+    const db = setup();
+    const queryOp = tasksDb.tables.users.query().andFilterEqual({ id: "1" })
+      .maybeOne();
 
     const result = SqlJsDriver.exec(db, queryOp);
 
@@ -282,19 +299,26 @@ describe("SqlJsDriver - Query Operations", () => {
     });
   });
 
-  test("should return null for maybeOne with no results", () => {
-    const queryOp = tasksDb.tables.users.query().andFilterEqual({ id: "nonexistent" }).maybeOne();
+  await t.step("should return null for maybeOne with no results", () => {
+    const db = setup();
+    const queryOp = tasksDb.tables.users.query().andFilterEqual({
+      id: "nonexistent",
+    }).maybeOne();
 
     const result = SqlJsDriver.exec(db, queryOp);
 
     expect(result).toBeNull();
   });
 
-  test("should query with groupBy", () => {
+  await t.step("should query with groupBy", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
       .groupBy((c) => [c.groupId])
-      .select((c) => ({ groupId: c.groupId, count: Expr.Aggregate.count(c.id) }))
+      .select((c) => ({
+        groupId: c.groupId,
+        count: Expr.Aggregate.count(c.id),
+      }))
       .all();
 
     const result = SqlJsDriver.exec(db, queryOp);
@@ -303,7 +327,8 @@ describe("SqlJsDriver - Query Operations", () => {
     expect(result[0]).toEqual({ groupId: "1", count: 2 });
   });
 
-  test("should query with limit", () => {
+  await t.step("should query with limit", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks.query().limit(Expr.external(1)).all();
 
     const result = SqlJsDriver.exec(db, queryOp);
@@ -311,7 +336,8 @@ describe("SqlJsDriver - Query Operations", () => {
     expect(result).toHaveLength(1);
   });
 
-  test("should query with orderBy (andSortDesc)", () => {
+  await t.step("should query with orderBy (andSortDesc)", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
       .andSortDesc((c) => c.name)
@@ -323,7 +349,8 @@ describe("SqlJsDriver - Query Operations", () => {
     expect(result[1].name).toBe("Jane Doe");
   });
 
-  test("should query with orderBy (andSortAsc)", () => {
+  await t.step("should query with orderBy (andSortAsc)", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
       .andSortAsc((c) => c.name)
@@ -335,7 +362,8 @@ describe("SqlJsDriver - Query Operations", () => {
     expect(result[1].name).toBe("John Doe");
   });
 
-  test("should query with expressions", () => {
+  await t.step("should query with expressions", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
       .select((c) => ({ idEmail: Expr.concatenate(c.id, c.email) }))
@@ -348,11 +376,9 @@ describe("SqlJsDriver - Query Operations", () => {
   });
 });
 
-describe("SqlJsDriver - Update Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - Update Operations", async (t) => {
+  const setup = () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     SqlJsDriver.exec(
@@ -366,52 +392,76 @@ describe("SqlJsDriver - Update Operations", () => {
         updatedAt: null,
       }),
     );
-  });
 
-  test("should update a record", () => {
-    const updateOp = tasksDb.tables.users.update({ name: "Paul Smith" }, (c) => Expr.equal(c.id, Expr.literal("1")));
+    return db;
+  };
+
+  await t.step("should update a record", () => {
+    const db = setup();
+    const updateOp = tasksDb.tables.users.update(
+      { name: "Paul Smith" },
+      (c) => Expr.equal(c.id, Expr.literal("1")),
+    );
 
     const result = SqlJsDriver.exec(db, updateOp);
     expect(result).toEqual({ updated: 1 });
 
-    const user = SqlJsDriver.exec(db, tasksDb.tables.users.query().andFilterEqual({ id: "1" }).maybeOne());
+    const user = SqlJsDriver.exec(
+      db,
+      tasksDb.tables.users.query().andFilterEqual({ id: "1" }).maybeOne(),
+    );
     expect(user?.name).toBe("Paul Smith");
   });
 
-  test("should update with external parameter", () => {
-    const updateOp = tasksDb.tables.users.update({ name: "Paul Smith" }, (c) => Expr.equal(c.id, Expr.external("1")));
+  await t.step("should update with external parameter", () => {
+    const db = setup();
+    const updateOp = tasksDb.tables.users.update(
+      { name: "Paul Smith" },
+      (c) => Expr.equal(c.id, Expr.external("1")),
+    );
 
     const result = SqlJsDriver.exec(db, updateOp);
     expect(result).toEqual({ updated: 1 });
   });
 
-  test("should updateEqual", () => {
-    const updateOp = tasksDb.tables.users.updateEqual({ name: "Jane Smith" }, { id: "1" });
+  await t.step("should updateEqual", () => {
+    const db = setup();
+    const updateOp = tasksDb.tables.users.updateEqual({ name: "Jane Smith" }, {
+      id: "1",
+    });
 
     const result = SqlJsDriver.exec(db, updateOp);
     expect(result).toEqual({ updated: 1 });
 
-    const user = SqlJsDriver.exec(db, tasksDb.tables.users.query().andFilterEqual({ id: "1" }).maybeOne());
+    const user = SqlJsDriver.exec(
+      db,
+      tasksDb.tables.users.query().andFilterEqual({ id: "1" }).maybeOne(),
+    );
     expect(user?.name).toBe("Jane Smith");
   });
 
-  test("should update date fields", () => {
+  await t.step("should update date fields", () => {
+    const db = setup();
     const newDate = new Date("2023-12-25T22:30:12.250Z");
-    const updateOp = tasksDb.tables.users.update({ updatedAt: newDate }, (c) => Expr.equal(c.id, Expr.literal("1")));
+    const updateOp = tasksDb.tables.users.update(
+      { updatedAt: newDate },
+      (c) => Expr.equal(c.id, Expr.literal("1")),
+    );
 
     const result = SqlJsDriver.exec(db, updateOp);
     expect(result).toEqual({ updated: 1 });
 
-    const user = SqlJsDriver.exec(db, tasksDb.tables.users.query().andFilterEqual({ id: "1" }).maybeOne());
+    const user = SqlJsDriver.exec(
+      db,
+      tasksDb.tables.users.query().andFilterEqual({ id: "1" }).maybeOne(),
+    );
     expect(user?.updatedAt).toEqual(newDate);
   });
 });
 
-describe("SqlJsDriver - Delete Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - Delete Operations", async (t) => {
+  const setup = () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     SqlJsDriver.exec(
@@ -435,10 +485,15 @@ describe("SqlJsDriver - Delete Operations", () => {
         },
       ]),
     );
-  });
 
-  test("should delete a record with literal", () => {
-    const deleteOp = tasksDb.tables.users.delete((c) => Expr.equal(c.id, Expr.literal("1")));
+    return db;
+  };
+
+  await t.step("should delete a record with literal", () => {
+    const db = setup();
+    const deleteOp = tasksDb.tables.users.delete((c) =>
+      Expr.equal(c.id, Expr.literal("1"))
+    );
 
     const result = SqlJsDriver.exec(db, deleteOp);
     expect(result).toEqual({ deleted: 1 });
@@ -448,14 +503,18 @@ describe("SqlJsDriver - Delete Operations", () => {
     expect(users[0].id).toBe("2");
   });
 
-  test("should delete with external parameter", () => {
-    const deleteOp = tasksDb.tables.users.delete((c) => Expr.equal(c.id, Expr.external("1")));
+  await t.step("should delete with external parameter", () => {
+    const db = setup();
+    const deleteOp = tasksDb.tables.users.delete((c) =>
+      Expr.equal(c.id, Expr.external("1"))
+    );
 
     const result = SqlJsDriver.exec(db, deleteOp);
     expect(result).toEqual({ deleted: 1 });
   });
 
-  test("should deleteEqual", () => {
+  await t.step("should deleteEqual", () => {
+    const db = setup();
     const deleteOp = tasksDb.tables.users.deleteEqual({ id: "1" });
 
     const result = SqlJsDriver.exec(db, deleteOp);
@@ -465,8 +524,11 @@ describe("SqlJsDriver - Delete Operations", () => {
     expect(users).toHaveLength(1);
   });
 
-  test("should delete multiple records", () => {
-    const deleteOp = tasksDb.tables.users.delete((c) => Expr.equal(c.groupId, Expr.literal("1")));
+  await t.step("should delete multiple records", () => {
+    const db = setup();
+    const deleteOp = tasksDb.tables.users.delete((c) =>
+      Expr.equal(c.groupId, Expr.literal("1"))
+    );
 
     const result = SqlJsDriver.exec(db, deleteOp);
     expect(result).toEqual({ deleted: 2 });
@@ -476,11 +538,9 @@ describe("SqlJsDriver - Delete Operations", () => {
   });
 });
 
-describe("SqlJsDriver - Join Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - Join Operations", async (t) => {
+  const setup = () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     SqlJsDriver.exec(
@@ -508,8 +568,18 @@ describe("SqlJsDriver - Join Operations", () => {
     SqlJsDriver.exec(
       db,
       tasksDb.tables.tasks.insertMany([
-        { id: "1", title: "Task 1", description: "First task", completed: false },
-        { id: "2", title: "Task 2", description: "Second task", completed: true },
+        {
+          id: "1",
+          title: "Task 1",
+          description: "First task",
+          completed: false,
+        },
+        {
+          id: "2",
+          title: "Task 2",
+          description: "Second task",
+          completed: true,
+        },
       ]),
     );
 
@@ -521,12 +591,19 @@ describe("SqlJsDriver - Join Operations", () => {
         { user_id: "2", task_id: "1" },
       ]),
     );
-  });
 
-  test("should perform inner join", () => {
+    return db;
+  };
+
+  await t.step("should perform inner join", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
-      .innerJoin(tasksDb.tables.joinUsersTasks.query(), "usersTasks", (c) => Expr.equal(c.usersTasks.user_id, c.id))
+      .innerJoin(
+        tasksDb.tables.joinUsersTasks.query(),
+        "usersTasks",
+        (c) => Expr.equal(c.usersTasks.user_id, c.id),
+      )
       .select((c) => ({
         userId: c.id,
         userName: c.name,
@@ -541,10 +618,15 @@ describe("SqlJsDriver - Join Operations", () => {
     expect(result.filter((r) => r.userId === "2")).toHaveLength(1);
   });
 
-  test("should perform left join", () => {
+  await t.step("should perform left join", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks
       .query()
-      .leftJoin(tasksDb.tables.joinUsersTasks.query(), "usersTasks", (c) => Expr.equal(c.id, c.usersTasks.task_id))
+      .leftJoin(
+        tasksDb.tables.joinUsersTasks.query(),
+        "usersTasks",
+        (c) => Expr.equal(c.id, c.usersTasks.task_id),
+      )
       .select((c) => ({
         taskId: c.id,
         taskTitle: c.title,
@@ -557,11 +639,20 @@ describe("SqlJsDriver - Join Operations", () => {
     expect(result.length).toBeGreaterThanOrEqual(2);
   });
 
-  test("should join multiple tables", () => {
+  await t.step("should join multiple tables", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.joinUsersTasks
       .query()
-      .innerJoin(tasksDb.tables.tasks.query(), "task", (c) => Expr.equal(c.task_id, c.task.id))
-      .innerJoin(tasksDb.tables.users.query(), "user", (c) => Expr.equal(c.user_id, c.user.id))
+      .innerJoin(
+        tasksDb.tables.tasks.query(),
+        "task",
+        (c) => Expr.equal(c.task_id, c.task.id),
+      )
+      .innerJoin(
+        tasksDb.tables.users.query(),
+        "user",
+        (c) => Expr.equal(c.user_id, c.user.id),
+      )
       .select((c) => ({
         userName: c.user.name,
         taskTitle: c.task.title,
@@ -576,11 +667,9 @@ describe("SqlJsDriver - Join Operations", () => {
   });
 });
 
-describe("SqlJsDriver - CTE (Common Table Expressions)", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - CTE (Common Table Expressions)", async (t) => {
+  const setup = () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     SqlJsDriver.exec(
@@ -604,9 +693,12 @@ describe("SqlJsDriver - CTE (Common Table Expressions)", () => {
         },
       ]),
     );
-  });
 
-  test("should execute simple CTE query", () => {
+    return db;
+  };
+
+  await t.step("should execute simple CTE query", () => {
+    const db = setup();
     const innerQuery = tasksDb.tables.users
       .query()
       .select((c) => ({ demo: c.id, id: c.id }))
@@ -622,7 +714,8 @@ describe("SqlJsDriver - CTE (Common Table Expressions)", () => {
     expect(result[0]).toHaveProperty("id");
   });
 
-  test("should execute CTE with additional operations", () => {
+  await t.step("should execute CTE with additional operations", () => {
+    const db = setup();
     const innerQuery = tasksDb.tables.users
       .query()
       .select((c) => ({ demo: c.id, id: c.id }))
@@ -639,26 +732,23 @@ describe("SqlJsDriver - CTE (Common Table Expressions)", () => {
   });
 });
 
-describe("SqlJsDriver - Pragma Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
-  });
-
-  test("should read user_version pragma", () => {
+Deno.test("SqlJsDriver - Pragma Operations", async (t) => {
+  await t.step("should read user_version pragma", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     const result = SqlJsDriver.exec(db, Utils.userVersion());
     expect(result).toBe(0);
   });
 
-  test("should set user_version pragma", () => {
+  await t.step("should set user_version pragma", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.exec(db, Utils.setUserVersion(42));
 
     const version = SqlJsDriver.exec(db, Utils.userVersion());
     expect(version).toBe(42);
   });
 
-  test("should list tables", () => {
+  await t.step("should list tables", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     const tables = SqlJsDriver.exec(db, Utils.listTables());
@@ -666,23 +756,34 @@ describe("SqlJsDriver - Pragma Operations", () => {
   });
 });
 
-describe("SqlJsDriver - JSON Operations", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - JSON Operations", async (t) => {
+  const setup = () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     SqlJsDriver.exec(
       db,
       tasksDb.tables.tasks.insertMany([
-        { id: "1", title: "Task 1", description: "First task", completed: false },
-        { id: "2", title: "Task 2", description: "Second task", completed: true },
+        {
+          id: "1",
+          title: "Task 1",
+          description: "First task",
+          completed: false,
+        },
+        {
+          id: "2",
+          title: "Task 2",
+          description: "Second task",
+          completed: true,
+        },
       ]),
     );
-  });
 
-  test("should create JSON object from columns", () => {
+    return db;
+  };
+
+  await t.step("should create JSON object from columns", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks
       .query()
       .select((c) => ({
@@ -703,7 +804,8 @@ describe("SqlJsDriver - JSON Operations", () => {
     });
   });
 
-  test("should create nested JSON objects", () => {
+  await t.step("should create nested JSON objects", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks
       .query()
       .select(({ id, title, description }) => ({
@@ -724,34 +826,38 @@ describe("SqlJsDriver - JSON Operations", () => {
   });
 });
 
-describe("SqlJsDriver - Migration Operations", () => {
-  test("should apply migrations", async () => {
-    const migration = Migration.init(SqlJsDriver, tasksDb, ({ database, schema }) => {
-      // Insert initial data
-      SqlJsDriver.exec(
-        database,
-        schema.tables.groups.insertMany([
-          { id: "group1", name: "Group 1" },
-          { id: "group2", name: "Group 2" },
-        ]),
-      );
+Deno.test("SqlJsDriver - Migration Operations", async (t) => {
+  await t.step("should apply migrations", async () => {
+    const migration = Migration.init(
+      SqlJsDriver,
+      tasksDb,
+      ({ database, schema }) => {
+        // Insert initial data
+        SqlJsDriver.exec(
+          database,
+          schema.tables.groups.insertMany([
+            { id: "group1", name: "Group 1" },
+            { id: "group2", name: "Group 2" },
+          ]),
+        );
 
-      SqlJsDriver.exec(
-        database,
-        schema.tables.users.insertMany([
-          {
-            id: "user1",
-            name: "User 1",
-            email: "user1@example.com",
-            displayName: null,
-            groupId: "group1",
-            updatedAt: null,
-          },
-        ]),
-      );
+        SqlJsDriver.exec(
+          database,
+          schema.tables.users.insertMany([
+            {
+              id: "user1",
+              name: "User 1",
+              email: "user1@example.com",
+              displayName: null,
+              groupId: "group1",
+              updatedAt: null,
+            },
+          ]),
+        );
 
-      return Promise.resolve();
-    });
+        return Promise.resolve();
+      },
+    );
 
     const db = SqlJsDriver.createDatabase() as Database;
     const [migratedDb] = await migration.apply(db);
@@ -761,14 +867,20 @@ describe("SqlJsDriver - Migration Operations", () => {
     const version = SqlJsDriver.exec(migratedDb, Utils.userVersion());
     expect(version).toBe(1);
 
-    const groups = SqlJsDriver.exec(migratedDb, tasksDb.tables.groups.query().all());
+    const groups = SqlJsDriver.exec(
+      migratedDb,
+      tasksDb.tables.groups.query().all(),
+    );
     expect(groups).toHaveLength(2);
 
-    const users = SqlJsDriver.exec(migratedDb, tasksDb.tables.users.query().all());
+    const users = SqlJsDriver.exec(
+      migratedDb,
+      tasksDb.tables.users.query().all(),
+    );
     expect(users).toHaveLength(1);
   });
 
-  test("should apply migration steps", async () => {
+  await t.step("should apply migration steps", async () => {
     const migration = Migration.init(
       SqlJsDriver,
       Schema.declare({
@@ -786,7 +898,7 @@ describe("SqlJsDriver - Migration Operations", () => {
           ...schema.tables.users.definition,
           archived: Column.boolean(),
         },
-      }),
+      })
     )(({ copyTable }) => {
       copyTable("users", "users", (user) => ({
         ...user,
@@ -802,11 +914,18 @@ describe("SqlJsDriver - Migration Operations", () => {
     expect(version).toBe(2);
   });
 
-  test("should be idempotent", async () => {
-    const migration = Migration.init(SqlJsDriver, tasksDb, ({ database, schema }) => {
-      SqlJsDriver.exec(database, schema.tables.groups.insert({ id: "group1", name: "Group 1" }));
-      return Promise.resolve();
-    });
+  await t.step("should be idempotent", async () => {
+    const migration = Migration.init(
+      SqlJsDriver,
+      tasksDb,
+      ({ database, schema }) => {
+        SqlJsDriver.exec(
+          database,
+          schema.tables.groups.insert({ id: "group1", name: "Group 1" }),
+        );
+        return Promise.resolve();
+      },
+    );
 
     const db = SqlJsDriver.createDatabase() as Database;
 
@@ -825,11 +944,9 @@ describe("SqlJsDriver - Migration Operations", () => {
   });
 });
 
-describe("SqlJsDriver - Advanced Queries", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - Advanced Queries", async (t) => {
+  const setup = () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     SqlJsDriver.exec(
@@ -873,9 +990,24 @@ describe("SqlJsDriver - Advanced Queries", () => {
     SqlJsDriver.exec(
       db,
       tasksDb.tables.tasks.insertMany([
-        { id: "1", title: "Task 1", description: "First task", completed: false },
-        { id: "2", title: "Task 2", description: "Second task", completed: true },
-        { id: "3", title: "Task 3", description: "Third task", completed: false },
+        {
+          id: "1",
+          title: "Task 1",
+          description: "First task",
+          completed: false,
+        },
+        {
+          id: "2",
+          title: "Task 2",
+          description: "Second task",
+          completed: true,
+        },
+        {
+          id: "3",
+          title: "Task 3",
+          description: "Third task",
+          completed: false,
+        },
       ]),
     );
 
@@ -887,9 +1019,12 @@ describe("SqlJsDriver - Advanced Queries", () => {
         { user_id: "2", task_id: "1" },
       ]),
     );
-  });
 
-  test("should find users with no tasks using subquery", () => {
+    return db;
+  };
+
+  await t.step("should find users with no tasks using subquery", () => {
+    const db = setup();
     const usersWithTasks = tasksDb.tables.joinUsersTasks
       .query()
       .groupBy((c) => [c.user_id])
@@ -906,10 +1041,16 @@ describe("SqlJsDriver - Advanced Queries", () => {
     expect(result[0].id).toBe("3");
   });
 
-  test("should use OR expressions", () => {
+  await t.step("should use OR expressions", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
-      .where((c) => Expr.or(Expr.equal(c.id, Expr.literal("1")), Expr.equal(c.id, Expr.literal("2"))))
+      .where((c) =>
+        Expr.or(
+          Expr.equal(c.id, Expr.literal("1")),
+          Expr.equal(c.id, Expr.literal("2")),
+        )
+      )
       .all();
 
     const result = SqlJsDriver.exec(db, queryOp);
@@ -917,10 +1058,16 @@ describe("SqlJsDriver - Advanced Queries", () => {
     expect(result).toHaveLength(2);
   });
 
-  test("should use AND expressions", () => {
+  await t.step("should use AND expressions", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
-      .where((c) => Expr.and(Expr.equal(c.groupId, Expr.literal("1")), Expr.isNull(c.displayName)))
+      .where((c) =>
+        Expr.and(
+          Expr.equal(c.groupId, Expr.literal("1")),
+          Expr.isNull(c.displayName),
+        )
+      )
       .all();
 
     const result = SqlJsDriver.exec(db, queryOp);
@@ -929,7 +1076,8 @@ describe("SqlJsDriver - Advanced Queries", () => {
     expect(result[0].id).toBe("1");
   });
 
-  test("should use aggregate functions", () => {
+  await t.step("should use aggregate functions", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
       .groupBy((c) => [c.groupId])
@@ -947,10 +1095,16 @@ describe("SqlJsDriver - Advanced Queries", () => {
     expect(result[0].countStar).toBeGreaterThan(0);
   });
 
-  test("should handle comparison operators", () => {
+  await t.step("should handle comparison operators", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.users
       .query()
-      .where((c) => Expr.greaterThan(c.updatedAt, Expr.literal(new Date("2023-12-24T23:00:00.000Z").getTime())))
+      .where((c) =>
+        Expr.greaterThan(
+          c.updatedAt,
+          Expr.literal(new Date("2023-12-24T23:00:00.000Z").getTime()),
+        )
+      )
       .all();
 
     const result = SqlJsDriver.exec(db, queryOp);
@@ -959,7 +1113,8 @@ describe("SqlJsDriver - Advanced Queries", () => {
     expect(result[0].id).toBe("2");
   });
 
-  test("should handle NOT expression", () => {
+  await t.step("should handle NOT expression", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks
       .query()
       .where((c) => Expr.not(Expr.equal(c.completed, Expr.literal(true))))
@@ -972,23 +1127,34 @@ describe("SqlJsDriver - Advanced Queries", () => {
   });
 });
 
-describe("SqlJsDriver - External Parameters", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
+Deno.test("SqlJsDriver - External Parameters", async (t) => {
+  const setup = () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     SqlJsDriver.execMany(db, Schema.createTables(tasksDb.tables));
 
     SqlJsDriver.exec(
       db,
       tasksDb.tables.tasks.insertMany([
-        { id: "1", title: "Task 1", description: "First task", completed: false },
-        { id: "2", title: "Task 2", description: "Second task", completed: true },
+        {
+          id: "1",
+          title: "Task 1",
+          description: "First task",
+          completed: false,
+        },
+        {
+          id: "2",
+          title: "Task 2",
+          description: "Second task",
+          completed: true,
+        },
       ]),
     );
-  });
 
-  test("should use external parameters in query", () => {
+    return db;
+  };
+
+  await t.step("should use external parameters in query", () => {
+    const db = setup();
     const queryOp = tasksDb.tables.tasks
       .query()
       .where((c) => Expr.equal(c.id, Expr.external("1")))
@@ -999,30 +1165,27 @@ describe("SqlJsDriver - External Parameters", () => {
     expect(result?.title).toBe("Task 1");
   });
 
-  test("should use named external parameters", () => {
-    const queryOp = tasksDb.tables.tasks.query().limit(Expr.external(10, "myLimit")).all();
+  await t.step("should use named external parameters", () => {
+    const queryOp = tasksDb.tables.tasks.query().limit(
+      Expr.external(10, "myLimit"),
+    ).all();
 
-    // Check that params exist and contain the limit value
     expect(queryOp.params).toBeDefined();
     const paramValues = Object.values(queryOp.params || {});
     expect(paramValues).toContain(10);
   });
 });
 
-describe("SqlJsDriver - Error Handling", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = SqlJsDriver.createDatabase() as Database;
-  });
-
-  test("should throw error for invalid SQL", () => {
+Deno.test("SqlJsDriver - Error Handling", async (t) => {
+  await t.step("should throw error for invalid SQL", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     expect(() => {
       db.exec("INVALID SQL STATEMENT");
     }).toThrow();
   });
 
-  test("should throw error when querying non-existent table", () => {
+  await t.step("should throw error when querying non-existent table", () => {
+    const db = SqlJsDriver.createDatabase() as Database;
     expect(() => {
       const queryOp = tasksDb.tables.tasks.query().all();
       SqlJsDriver.exec(db, queryOp);

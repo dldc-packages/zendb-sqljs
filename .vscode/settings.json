@@ -1,8 +1,8 @@
 {
-  "editor.defaultFormatter": "oxc.oxc-vscode",
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.oxc": "explicit",
-    "source.organizeImports": "explicit"
+  "deno.enable": true,
+  "editor.defaultFormatter": "denoland.vscode-deno",
+  "npm.autoDetect": "off",
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
   }
 }
