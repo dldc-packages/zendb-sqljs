@@ -19,8 +19,8 @@ importers:
         version: 7.0.2001
     devDependencies:
       '@dldc/zendb':
-        specifier: jsr:^12.1.0
-        version: '@jsr/dldc__zendb@12.1.0'
+        specifier: jsr:^12.2.0
+        version: '@jsr/dldc__zendb@12.2.0'
       '@types/node':
         specifier: ^26.1.2
         version: 26.1.2
@@ -396,8 +396,8 @@ packages:
   '@jsr/dldc__sqlite@3.1.1':
     resolution: {integrity: sha512-g8qPNSeQU712Yp9M93gyxQo3Na1a98VYTC+cKe5PEOXfPHN0L+PaCed6vwf+Hchpn96Thec8HVXl8uzCi2cKbw==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__sqlite/3.1.1.tgz}
 
-  '@jsr/dldc__zendb@12.1.0':
-    resolution: {integrity: sha512-sTac0assxaun5Xkz5jTq9eksxf6bPE7JflVfSyqhWQYYFG7q7bWjBGX6RJdJi+zyD/SOsRokV10hSsr70rt76A==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__zendb/12.1.0.tgz}
+  '@jsr/dldc__zendb@12.2.0':
+    resolution: {integrity: sha512-gFkrk51UlhAfONU+1kNOWj/WmAHt3+kEibE+JnOeZgUQxpdP3+30eeuRmHmiCSl4n8x0rGUZX3ucIG0916T+lQ==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__zendb/12.2.0.tgz}
 
   '@napi-rs/wasm-runtime@1.1.6':
     resolution: {integrity: sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg==}
@@ -2490,7 +2490,7 @@ snapshots:
 
   '@jsr/dldc__sqlite@3.1.1': {}
 
-  '@jsr/dldc__zendb@12.1.0':
+  '@jsr/dldc__zendb@12.2.0':
     dependencies:
       '@jsr/dldc__erreur': 7.1.1
       '@jsr/dldc__sqlite': 3.1.1

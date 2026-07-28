@@ -33,7 +33,16 @@ export const SqlJsDriver: TSqlJsDriver = {
     }
     return new SqlJsDriver.sqlJsStatic.Database();
   },
+  createDatabaseSync: () => {
+    if (!SqlJsDriver.sqlJsStatic) {
+      throw new Error("sql.js is not set. Please call `setSqlJsStatic` first.");
+    }
+    return new SqlJsDriver.sqlJsStatic.Database();
+  },
   closeDatabase: (db: Database) => {
+    db.close();
+  },
+  closeDatabaseSync: (db: Database) => {
     db.close();
   },
   exec,

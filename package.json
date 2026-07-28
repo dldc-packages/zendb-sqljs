@@ -47,7 +47,7 @@
     "oxlint-tsgolint": "^7.0.2001"
   },
   "devDependencies": {
-    "@dldc/zendb": "jsr:^12.1.0",
+    "@dldc/zendb": "jsr:^12.2.0",
     "@types/node": "^26.1.2",
     "@types/sql.js": "^1.4.11",
     "@vitest/coverage-v8": "^4.1.10",
@@ -60,7 +60,7 @@
     "vitest": "^4.1.10"
   },
   "peerDependencies": {
-    "@dldc/zendb": "^12.1.0",
+    "@dldc/zendb": "^12.2.0",
     "sql.js": "^1.14.0"
   },
   "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72"
