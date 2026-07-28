@@ -11,8 +11,8 @@ import type {
   TPragmaSetOperation,
   TQueryOperation,
   TUpdateOperation,
-} from '@dldc/zendb';
-import type { Database, SqlJsStatic } from 'sql.js';
+} from "@dldc/zendb";
+import type { Database, SqlJsStatic } from "sql.js";
 
 export interface TSqlJsDriver extends Driver.TDriver<Database> {
   sqlJsStatic: null | SqlJsStatic;
@@ -23,13 +23,13 @@ export const SqlJsDriver: TSqlJsDriver = {
   sqlJsStatic: null,
   setSqlJsStatic: (sqlJsStatic: SqlJsStatic) => {
     if (SqlJsDriver.sqlJsStatic) {
-      console.warn('sql.js is already set. Overriding the existing instance.');
+      console.warn("sql.js is already set. Overriding the existing instance.");
     }
     SqlJsDriver.sqlJsStatic = sqlJsStatic;
   },
   createDatabase: () => {
     if (!SqlJsDriver.sqlJsStatic) {
-      throw new Error('sql.js is not set. Please call `setSqlJsStatic` first.');
+      throw new Error("sql.js is not set. Please call `setSqlJsStatic` first.");
     }
     return new SqlJsDriver.sqlJsStatic.Database();
   },
@@ -41,23 +41,23 @@ export const SqlJsDriver: TSqlJsDriver = {
 };
 
 function exec<Op extends TOperation>(db: Database, op: Op): TOperationResult<Op> {
-  if (op.kind === 'CreateTable') {
+  if (op.kind === "CreateTable") {
     db.exec(op.sql);
     return opResult<TCreateTableOperation>(null);
   }
-  if (op.kind === 'DropTable') {
+  if (op.kind === "DropTable") {
     db.exec(op.sql);
     return opResult<TDropTableOperation>(null);
   }
-  if (op.kind === 'Insert') {
+  if (op.kind === "Insert") {
     db.exec(op.sql, op.params ? prepareParams(op.params) : null);
     return opResult<TInsertOperation<any>>(op.parse());
   }
-  if (op.kind === 'InsertMany') {
+  if (op.kind === "InsertMany") {
     db.exec(op.sql, op.params ? prepareParams(op.params) : null);
     return opResult<TInsertOperation<any>>(op.parse());
   }
-  if (op.kind === 'Delete') {
+  if (op.kind === "Delete") {
     const stmt = db.prepare(op.sql);
     if (op.params) {
       stmt.bind(prepareParams(op.params));
@@ -66,7 +66,7 @@ function exec<Op extends TOperation>(db: Database, op: Op): TOperationResult<Op>
     stmt.free();
     return opResult<TDeleteOperation>(op.parse({ deleted: db.getRowsModified() }));
   }
-  if (op.kind === 'Update') {
+  if (op.kind === "Update") {
     const stmt = db.prepare(op.sql);
     if (op.params) {
       stmt.bind(prepareParams(op.params));
@@ -75,7 +75,7 @@ function exec<Op extends TOperation>(db: Database, op: Op): TOperationResult<Op>
     stmt.free();
     return opResult<TUpdateOperation>(op.parse({ updated: db.getRowsModified() }));
   }
-  if (op.kind === 'Query') {
+  if (op.kind === "Query") {
     const stmt = db.prepare(op.sql);
     if (op.params) {
       stmt.bind(prepareParams(op.params));
@@ -88,7 +88,7 @@ function exec<Op extends TOperation>(db: Database, op: Op): TOperationResult<Op>
     stmt.free();
     return opResult<TQueryOperation<any>>(op.parse(results));
   }
-  if (op.kind === 'ListTables') {
+  if (op.kind === "ListTables") {
     const stmt = db.prepare(op.sql);
     const results: Array<Record<string, any>> = [];
     while (stmt.step()) {
@@ -98,7 +98,7 @@ function exec<Op extends TOperation>(db: Database, op: Op): TOperationResult<Op>
     stmt.free();
     return opResult<TListTablesOperation>(op.parse(results));
   }
-  if (op.kind === 'Pragma') {
+  if (op.kind === "Pragma") {
     const stmt = db.prepare(op.sql);
     stmt.step();
     const result = stmt.getAsObject();
@@ -106,7 +106,7 @@ function exec<Op extends TOperation>(db: Database, op: Op): TOperationResult<Op>
     stmt.free();
     return opResult<TPragmaOperation<any>>(op.parse([result]));
   }
-  if (op.kind === 'PragmaSet') {
+  if (op.kind === "PragmaSet") {
     db.exec(op.sql);
     return opResult<TPragmaSetOperation>(null);
   }
