@@ -49,10 +49,7 @@ export const SqlJsDriver: TSqlJsDriver = {
   execMany,
 };
 
-function exec<Op extends TOperation>(
-  db: Database,
-  op: Op,
-): TOperationResult<Op> {
+function exec<Op extends TOperation>(db: Database, op: Op): TOperationResult<Op> {
   if (op.kind === "CreateTable") {
     db.exec(op.sql);
     return opResult<TCreateTableOperation>(null);
@@ -76,9 +73,7 @@ function exec<Op extends TOperation>(
     }
     stmt.run();
     stmt.free();
-    return opResult<TDeleteOperation>(
-      op.parse({ deleted: db.getRowsModified() }),
-    );
+    return opResult<TDeleteOperation>(op.parse({ deleted: db.getRowsModified() }));
   }
   if (op.kind === "Update") {
     const stmt = db.prepare(op.sql);
@@ -87,9 +82,7 @@ function exec<Op extends TOperation>(
     }
     stmt.run();
     stmt.free();
-    return opResult<TUpdateOperation>(
-      op.parse({ updated: db.getRowsModified() }),
-    );
+    return opResult<TUpdateOperation>(op.parse({ updated: db.getRowsModified() }));
   }
   if (op.kind === "Query") {
     const stmt = db.prepare(op.sql);
@@ -130,16 +123,11 @@ function exec<Op extends TOperation>(
   return expectNever(op);
 }
 
-function execMany<Op extends TOperation>(
-  db: Database,
-  ops: Op[],
-): TOperationResult<Op>[] {
+function execMany<Op extends TOperation>(db: Database, ops: Op[]): TOperationResult<Op>[] {
   return ops.map((op) => exec(db, op));
 }
 
-function opResult<Op extends TOperation>(
-  res: TOperationResult<Op>,
-): TOperationResult<TOperation> {
+function opResult<Op extends TOperation>(res: TOperationResult<Op>): TOperationResult<TOperation> {
   return res;
 }
 
@@ -147,10 +135,7 @@ function expectNever(val: never): never {
   throw new Error(`Unexpected value: ${val as any}`);
 }
 
-function mapKeys<T extends Record<string, any>>(
-  obj: T,
-  transformKey: (key: string) => string,
-): T {
+function mapKeys<T extends Record<string, any>>(obj: T, transformKey: (key: string) => string): T {
   return Object.fromEntries(
     Object.entries(obj).map(([key, val]) => {
       return [transformKey(key), val];
